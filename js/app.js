@@ -1,6 +1,6 @@
 // app.js — Controller principale
 
-const GOOGLE_CLIENT_ID = '1072745642634-bvjmub2voji06vb7ptrn1gip0bctbtvd.apps.googleusercontent.com'; // Sostituire con il proprio Client ID OAuth2
+const GOOGLE_CLIENT_ID = '832111135804-l9dr0rdhgtvob8dt8jcam8ecp5v1j5jc.apps.googleusercontent.com'; // Sostituire con il proprio Client ID OAuth2
 
 // Stato della vista archivio (condiviso tra funzioni)
 let _viewRootId = null;

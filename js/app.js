@@ -93,6 +93,23 @@ async function startCaptureView(clear = true) {
     document.getElementById('btn-capture').style.display = 'none';
   }
 
+  // Tap-to-focus sul preview
+  const previewContainer = document.getElementById('camera-preview-container');
+  previewContainer.addEventListener('click', async (e) => {
+    const rect = previewContainer.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top)  / rect.height;
+    await setFocusPoint(x, y);
+
+    // Indicatore visivo del punto di messa a fuoco
+    const indicator = document.createElement('div');
+    indicator.className = 'focus-indicator';
+    indicator.style.left = `${(x * 100).toFixed(1)}%`;
+    indicator.style.top  = `${(y * 100).toFixed(1)}%`;
+    previewContainer.appendChild(indicator);
+    setTimeout(() => indicator.remove(), 800);
+  });
+
   // Mostra il tasto flash solo se supportato dal dispositivo
   const torchBtn = document.getElementById('btn-torch');
   if (cameraAvailable && isTorchSupported()) {

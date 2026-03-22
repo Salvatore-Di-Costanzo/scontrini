@@ -11,6 +11,7 @@ async function startCamera() {
         facingMode: 'environment',
         width:  { ideal: 3840 },
         height: { ideal: 2160 },
+        focusMode: 'continuous',
       },
     });
     video.srcObject = _stream;
@@ -27,6 +28,22 @@ function stopCamera() {
     _stream = null;
   }
   _torchOn = false;
+}
+
+// Messa a fuoco in un punto specifico (coordinate normalizzate 0-1)
+async function setFocusPoint(x, y) {
+  if (!_stream) return;
+  const track = _stream.getVideoTracks()[0];
+  if (!track) return;
+  const caps = track.getCapabilities ? track.getCapabilities() : {};
+  if (!caps.focusMode || !caps.focusMode.includes('manual')) return;
+  try {
+    await track.applyConstraints({
+      advanced: [{ pointsOfInterest: [{ x, y }], focusMode: 'single-shot' }],
+    });
+  } catch (err) {
+    console.warn('Tap-to-focus non supportato:', err.message);
+  }
 }
 
 // Restituisce true se il dispositivo supporta il flash/torcia

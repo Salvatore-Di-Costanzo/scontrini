@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head><title>Tests</title></head>
+<body>
+<pre id="output"></pre>
+<script src="../js/session.js"></script>
+<script src="../js/metadata.js"></script>
+<script src="../js/search.js"></script>
+<script>
+const results = [];
+
+function assert(desc, condition) {
+  results.push((condition ? '✅' : '❌') + ' ' + desc);
+}
+
+// session.js tests
+clearSession();
+assert('starts empty', photoCount() === 0);
+addPhoto('data:image/jpeg;base64,AAA');
+assert('count is 1 after addPhoto', photoCount() === 1);
+addPhoto('data:image/jpeg;base64,BBB');
+assert('count is 2 after second addPhoto', photoCount() === 2);
+assert('getPhotos returns copy', getPhotos() !== getPhotos());
+assert('getPhotos has correct values', getPhotos()[0] === 'data:image/jpeg;base64,AAA');
+clearSession();
+assert('count is 0 after clearSession', photoCount() === 0);
+
+// metadata.js tests
+const fakeResults = [
+  { metadata: { categoria: 'Scontrini', descrizione: 'Caldaia Baxi', tag: ['garanzia', 'caldaia'], importo: '1200.00', data: '2026-03-22' }, error: null },
+  { metadata: { categoria: 'Scontrini', descrizione: 'Installazione', tag: ['caldaia', 'idraulico'], importo: '200.00', data: '2026-03-21' }, error: null },
+  { metadata: null, error: 'Gemini failed' },
+];
+const merged = mergeMetadata(fakeResults);
+assert('merge: categoria is most frequent', merged.categoria === 'Scontrini');
+assert('merge: descrizione joins unique values', merged.descrizione === 'Caldaia Baxi, Installazione');
+assert('merge: tag union deduplicated', merged.tag.length === 3 && merged.tag.includes('caldaia'));
+assert('merge: importo summed', merged.importo === '1400.00');
+assert('merge: data is earliest', merged.data === '2026-03-21');
+
+const { resolved, isNew } = resolveCategory('scontrini', ['Scontrini', 'Ricette']);
+assert('resolveCategory: matches existing case-insensitive', resolved === 'Scontrini' && !isNew);
+const { resolved: r2, isNew: n2 } = resolveCategory('Garanzie', ['Scontrini', 'Ricette']);
+assert('resolveCategory: new category flagged', r2 === 'Garanzie' && n2 === true);
+
+assert('toSlug: basic', toSlug('Caldaia Baxi ECO5') === 'caldaia-baxi-eco5');
+assert('toSlug: accents', toSlug('Ricevuta caffè') === 'ricevuta-caffe');
+
+// index-store / buildFilename tests (metadata.js already loaded)
+assert('buildFilename: contains slug and date', buildFilename({ descrizione: 'Caldaia Baxi', data: '2026-03-22' }).startsWith('caldaia-baxi_20260322'));
+assert('buildFilename: ends with .pdf', buildFilename({ descrizione: 'test', data: '2026-03-22' }).endsWith('.pdf'));
+
+// search.js tests
+const testEntries = [
+  { id: '1', data: '2026-03-22', categoria: 'Scontrini', descrizione: 'Caldaia Baxi', tag: ['garanzia'], importo: '1200', drive_file_id: 'a', drive_url: '#' },
+  { id: '2', data: '2026-02-10', categoria: 'Ricette', descrizione: 'Ricetta medica', tag: ['dottore'], importo: '', drive_file_id: 'b', drive_url: '#' },
+  { id: '3', data: '2026-01-05', categoria: 'Analisi', descrizione: 'Esami sangue', tag: ['sangue', 'laboratorio'], importo: '45', drive_file_id: 'c', drive_url: '#' },
+];
+const noFilter = { text: '', cat: '', from: '', to: '', importoMin: '', importoMax: '' };
+assert('filter by categoria', filterEntries(testEntries, { ...noFilter, cat: 'Ricette' }).length === 1);
+assert('filter by text in descrizione', filterEntries(testEntries, { ...noFilter, text: 'caldaia' }).length === 1);
+assert('filter by text in tag', filterEntries(testEntries, { ...noFilter, text: 'sangue' }).length === 1);
+assert('filter by date from', filterEntries(testEntries, { ...noFilter, from: '2026-02-01' }).length === 2);
+assert('filter by date range', filterEntries(testEntries, { ...noFilter, from: '2026-01-01', to: '2026-01-31' }).length === 1);
+assert('filter by importo min', filterEntries(testEntries, { ...noFilter, importoMin: '100' }).length === 1);
+assert('filter by importo max', filterEntries(testEntries, { ...noFilter, importoMax: '50' }).length === 2);
+assert('filter by importo range', filterEntries(testEntries, { ...noFilter, importoMin: '40', importoMax: '50' }).length === 1);
+assert('no filter returns all', filterEntries(testEntries, noFilter).length === 3);
+
+document.getElementById('output').textContent = results.join('\n');
+</script>
+</body>
+</html>

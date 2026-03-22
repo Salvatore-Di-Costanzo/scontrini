@@ -1,0 +1,20 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 1rem; }
+h1, h2 { margin-bottom: 1rem; }
+.view { padding: 1rem 0; }
+button { display: block; width: 100%; padding: 0.75rem; margin: 0.5rem 0;
+         background: #1a73e8; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; }
+button:disabled { background: #ccc; cursor: not-allowed; }
+input[type="text"], input[type="password"], input[type="date"], input[type="number"], select {
+  display: block; width: 100%; padding: 0.5rem; margin: 0.25rem 0 0.75rem;
+  border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+label { display: block; font-weight: 600; margin-top: 0.5rem; }
+#camera-video { width: 100%; border-radius: 8px; background: #000; }
+#photo-thumbnails { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0; }
+#photo-thumbnails img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; }
+#categoria-suggestions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+#categoria-suggestions button { width: auto; padding: 0.25rem 0.75rem; font-size: 0.85rem; background: #e8f0fe; color: #1a73e8; }
+#search-results { margin-top: 1rem; }
+.result-item { padding: 0.75rem; border: 1px solid #eee; border-radius: 6px; margin-bottom: 0.5rem; }
+.result-item a { color: #1a73e8; text-decoration: none; }
+#saving-status { color: #555; margin-top: 0.5rem; }

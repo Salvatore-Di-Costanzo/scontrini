@@ -56,6 +56,16 @@ async function appendToIndex(entry, rootFolderId) {
 }
 
 // Aggiunge deleted_at all'entry (soft delete)
+// Aggiorna i campi di un'entry esistente
+async function updateEntry(id, changes, rootFolderId) {
+  const { entries, fileId } = await readIndex(rootFolderId);
+  const entry = entries.find(e => e.id === id);
+  if (entry) {
+    Object.assign(entry, changes);
+    await writeIndex(entries, fileId, rootFolderId);
+  }
+}
+
 async function softDeleteEntry(id, rootFolderId) {
   const { entries, fileId } = await readIndex(rootFolderId);
   const entry = entries.find(e => e.id === id);

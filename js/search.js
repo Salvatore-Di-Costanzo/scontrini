@@ -96,11 +96,19 @@ function renderSearchResults(entries, { isTrash = false, onTrash, onRestore, onP
         actions.appendChild(restoreBtn);
         actions.appendChild(delBtn);
       } else {
+        const editBtn = document.createElement('button');
+        editBtn.className = 'result-action-btn';
+        editBtn.title = 'Modifica';
+        editBtn.textContent = '✎';
+        editBtn.addEventListener('click', () => onEdit && onEdit(e, div));
+
         const trashBtn = document.createElement('button');
         trashBtn.className = 'result-action-btn';
         trashBtn.title = 'Sposta nel cestino';
         trashBtn.textContent = '🗑';
         trashBtn.addEventListener('click', () => onTrash && onTrash(e.id, e.drive_file_id));
+
+        actions.appendChild(editBtn);
         actions.appendChild(trashBtn);
       }
 

@@ -4,7 +4,7 @@ function mergeMetadata(analysisResults) {
   // Esclude le analisi fallite
   const valid = analysisResults.filter(r => r.metadata !== null);
   if (valid.length === 0) {
-    return { categoria: '', descrizione: '', tag: [], importo: '', data: '' };
+    return { categoria: 'Altro', descrizione: '', tag: [], importo: '', data: new Date().toISOString().slice(0, 10) };
   }
 
   // categoria: valore più frequente (senza distinzione maiuscole)

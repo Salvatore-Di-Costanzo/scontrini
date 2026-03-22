@@ -75,8 +75,8 @@ async function startCaptureView() {
   if (cameraAvailable) {
     document.getElementById('btn-capture').onclick = () => {
       const base64 = capturePhoto();
-      addPhoto(base64);
-      renderThumbnail(base64);
+      const id = addPhoto(base64);
+      renderThumbnail(base64, false, id);
       document.getElementById('btn-analyze').disabled = false;
     };
   }
@@ -92,12 +92,12 @@ async function startCaptureView() {
         setOriginalPdf(file);
         // Converte in base64 per l'analisi Gemini
         const base64 = await fileToBase64(file);
-        addPhoto(base64);
-        renderThumbnail(null, true);
+        const id = addPhoto(base64);
+        renderThumbnail(null, true, id);
       } else {
         const base64 = await fileToBase64(file);
-        addPhoto(base64);
-        renderThumbnail(base64, false);
+        const id = addPhoto(base64);
+        renderThumbnail(base64, false, id);
       }
     }
     document.getElementById('btn-analyze').disabled = false;
@@ -106,18 +106,34 @@ async function startCaptureView() {
   document.getElementById('btn-analyze').onclick = () => startReviewView();
 }
 
-function renderThumbnail(base64, isPdf) {
+function renderThumbnail(base64, isPdf, photoId) {
   const container = document.getElementById('photo-thumbnails');
+  const wrapper = document.createElement('div');
+  wrapper.className = 'thumb-wrapper';
+
   if (isPdf) {
     const div = document.createElement('div');
     div.className = 'pdf-thumb';
     div.textContent = 'PDF';
-    container.appendChild(div);
+    wrapper.appendChild(div);
   } else {
     const img = document.createElement('img');
     img.src = base64;
-    container.appendChild(img);
+    wrapper.appendChild(img);
   }
+
+  // Bottone × per rimuovere dalla sessione
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'thumb-remove';
+  removeBtn.textContent = '×';
+  removeBtn.addEventListener('click', () => {
+    if (photoId) removePhoto(photoId);
+    wrapper.remove();
+    const hasPhotos = document.getElementById('photo-thumbnails').children.length > 0 || getOriginalPdf();
+    document.getElementById('btn-analyze').disabled = !hasPhotos;
+  });
+  wrapper.appendChild(removeBtn);
+  container.appendChild(wrapper);
 }
 
 // ── Vista revisione ───────────────────────────────────────────
@@ -305,7 +321,7 @@ async function startSearchView() {
     const importoMax = document.getElementById('search-importo-max').value;
     const active = getActiveEntries(_viewAllEntries);
     const filtered = filterEntries(active, { text, cat, from, to, importoMin, importoMax });
-    renderSearchResults(filtered, { isTrash: false, onTrash: handleTrash });
+    renderSearchResults(filtered, { isTrash: false, onTrash: handleTrash, onEdit: handleEditEntry });
   };
 
   // Tab archivio / cestino
@@ -348,6 +364,70 @@ async function handleRestore(id) {
   if (entry) delete entry.deleted_at;
   await restoreEntry(id, _viewRootId);
   document.getElementById('tab-trash').click();
+}
+
+// Modifica inline di un documento dall'archivio
+function handleEditEntry(entry, cardEl) {
+  const original = cardEl.innerHTML;
+  cardEl.classList.add('result-item-editing');
+  cardEl.innerHTML = '';
+
+  function field(labelText, value, type) {
+    const wrap = document.createElement('div');
+    const lbl = document.createElement('label');
+    lbl.textContent = labelText;
+    const inp = document.createElement('input');
+    inp.type = type || 'text';
+    inp.value = value || '';
+    inp.className = 'edit-field';
+    wrap.appendChild(lbl);
+    wrap.appendChild(inp);
+    return { wrap, inp };
+  }
+
+  const { wrap: wCat,  inp: iCat  } = field('Categoria', entry.categoria);
+  const { wrap: wDesc, inp: iDesc } = field('Descrizione', entry.descrizione);
+  const { wrap: wTag,  inp: iTag  } = field('Tag (virgola)', (entry.tag || []).join(', '));
+  const { wrap: wImp,  inp: iImp  } = field('Importo (€)', entry.importo);
+  const { wrap: wDate, inp: iDate } = field('Data', entry.data, 'date');
+
+  const btnRow = document.createElement('div');
+  btnRow.className = 'edit-btn-row';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = 'Salva';
+  saveBtn.className = 'edit-save';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Annulla';
+  cancelBtn.className = 'btn-secondary edit-cancel';
+
+  btnRow.appendChild(saveBtn);
+  btnRow.appendChild(cancelBtn);
+
+  [wCat, wDesc, wTag, wImp, wDate, btnRow].forEach(el => cardEl.appendChild(el));
+
+  cancelBtn.onclick = () => {
+    cardEl.classList.remove('result-item-editing');
+    cardEl.innerHTML = original;
+  };
+
+  saveBtn.onclick = async () => {
+    const changes = {
+      categoria: iCat.value.trim() || entry.categoria,
+      descrizione: iDesc.value.trim(),
+      tag: iTag.value.split(',').map(t => t.trim()).filter(Boolean),
+      importo: iImp.value.trim(),
+      data: iDate.value || entry.data,
+    };
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Salvataggio…';
+    Object.assign(entry, changes);
+    await updateEntry(entry.id, changes, _viewRootId);
+    cardEl.classList.remove('result-item-editing');
+    // Ri-renderizza il tab corrente
+    document.getElementById(_viewIsTrash ? 'tab-trash' : 'tab-archive').click();
+  };
 }
 
 async function handlePermanentDelete(id, driveFileId) {

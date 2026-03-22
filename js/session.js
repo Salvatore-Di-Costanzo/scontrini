@@ -1,14 +1,20 @@
 // session.js — Stato della sessione in memoria
 
-let _photos = []; // array di stringhe base64
+let _photos = []; // [{id, base64}]
 let _originalPdf = null; // File originale se l'utente carica un PDF
 
 function addPhoto(base64) {
-  _photos.push(base64);
+  const id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+  _photos.push({ id, base64 });
+  return id;
+}
+
+function removePhoto(id) {
+  _photos = _photos.filter(p => p.id !== id);
 }
 
 function getPhotos() {
-  return [..._photos];
+  return _photos.map(p => p.base64);
 }
 
 function setOriginalPdf(file) {

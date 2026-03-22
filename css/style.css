@@ -51,6 +51,8 @@ body {
   padding: 0 1.25rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
 }
 
 .logo {
@@ -357,6 +359,22 @@ button:disabled {
   border-radius: var(--radius-sm);
   border: 2px solid var(--surface);
   box-shadow: var(--shadow-sm);
+}
+
+.pdf-thumb {
+  width: 76px;
+  height: 76px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ═══════════════════════════════════════════════════════════

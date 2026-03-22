@@ -17,6 +17,11 @@ function generateId() {
 
 // ── Avvio ──────────────────────────────────────────────
 window.addEventListener('load', async () => {
+  // Click sul logo/titolo → torna all'archivio se loggato
+  document.querySelector('.app-header').addEventListener('click', async () => {
+    if (isGoogleSignedIn()) await startSearchView();
+  });
+
   if (!hasGeminiKey()) {
     showView('view-setup');
     document.getElementById('btn-save-gemini-key').addEventListener('click', () => {
@@ -29,7 +34,7 @@ window.addEventListener('load', async () => {
     document.getElementById('btn-google-login').addEventListener('click', async () => {
       await initGoogleAuth(GOOGLE_CLIENT_ID);
       await googleLogin();
-      await startCaptureView();
+      await startSearchView();
     });
     return;
   }
@@ -41,13 +46,13 @@ window.addEventListener('load', async () => {
     document.getElementById('setup-google').style.display = 'block';
     document.getElementById('btn-google-login').addEventListener('click', async () => {
       await googleLogin();
-      await startCaptureView();
+      await startSearchView();
     });
     return;
   }
 
   await ensureGoogleToken();
-  await startCaptureView();
+  await startSearchView();
 });
 
 // ── Vista acquisizione ──────────────────────────────────────────
@@ -77,9 +82,18 @@ async function startCaptureView() {
 
   document.getElementById('input-file-upload').onchange = async (e) => {
     for (const file of e.target.files) {
-      const base64 = await fileToBase64(file);
-      addPhoto(base64);
-      renderThumbnail(base64);
+      if (file.type === 'application/pdf') {
+        // Salva il PDF originale per caricarlo direttamente su Drive
+        setOriginalPdf(file);
+        // Converte in base64 per l'analisi Gemini
+        const base64 = await fileToBase64(file);
+        addPhoto(base64);
+        renderThumbnail(null, true);
+      } else {
+        const base64 = await fileToBase64(file);
+        addPhoto(base64);
+        renderThumbnail(base64, false);
+      }
     }
     document.getElementById('btn-analyze').disabled = false;
   };
@@ -87,10 +101,18 @@ async function startCaptureView() {
   document.getElementById('btn-analyze').onclick = () => startReviewView();
 }
 
-function renderThumbnail(base64) {
-  const img = document.createElement('img');
-  img.src = base64;
-  document.getElementById('photo-thumbnails').appendChild(img);
+function renderThumbnail(base64, isPdf) {
+  const container = document.getElementById('photo-thumbnails');
+  if (isPdf) {
+    const div = document.createElement('div');
+    div.className = 'pdf-thumb';
+    div.textContent = 'PDF';
+    container.appendChild(div);
+  } else {
+    const img = document.createElement('img');
+    img.src = base64;
+    container.appendChild(img);
+  }
 }
 
 // ── Vista revisione ───────────────────────────────────────────
@@ -119,10 +141,10 @@ async function startReviewView() {
   const suggestionsEl = document.getElementById('categoria-suggestions');
   suggestionsEl.innerHTML = '';
 
-  if (isNew && existingCategories.length > 0) {
+  if (existingCategories.length > 0) {
     const hint = document.createElement('p');
     hint.className = 'hint-text';
-    hint.textContent = 'Categoria nuova suggerita. Scegli una esistente o conferma:';
+    hint.textContent = isNew ? 'Categoria nuova suggerita. Scegli una esistente o conferma:' : 'Cambia categoria:';
     suggestionsEl.appendChild(hint);
   }
 
@@ -167,11 +189,16 @@ async function saveSession(rootId, existingCategories) {
   const filename = buildFilename(metadata);
   const yearMonth = data.slice(0, 7); // "2026-03"
 
-  // Genera il PDF subito, così è disponibile come fallback locale anche in caso di errore Drive
+  // Genera il PDF (o usa quello originale caricato dall'utente)
   setStatus('Generazione PDF...');
   let pdfBuffer;
   try {
-    pdfBuffer = await generatePdf(getPhotos());
+    const originalPdf = getOriginalPdf();
+    if (originalPdf) {
+      pdfBuffer = await originalPdf.arrayBuffer();
+    } else {
+      pdfBuffer = await generatePdf(getPhotos());
+    }
   } catch (err) {
     setStatus(`Errore generazione PDF: ${err.message}`);
     return;

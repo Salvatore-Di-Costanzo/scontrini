@@ -1,6 +1,7 @@
 // camera.js — Acquisizione foto via getUserMedia + fallback caricamento file
 
 let _stream = null;
+let _torchOn = false;
 
 async function startCamera() {
   const video = document.getElementById('camera-video');
@@ -19,6 +20,33 @@ function stopCamera() {
     _stream.getTracks().forEach(t => t.stop());
     _stream = null;
   }
+  _torchOn = false;
+}
+
+// Restituisce true se il dispositivo supporta il flash/torcia
+function isTorchSupported() {
+  if (!_stream) return false;
+  const track = _stream.getVideoTracks()[0];
+  if (!track) return false;
+  const caps = track.getCapabilities ? track.getCapabilities() : {};
+  return !!caps.torch;
+}
+
+// Attiva o disattiva il flash
+async function setTorch(enabled) {
+  if (!_stream) return;
+  const track = _stream.getVideoTracks()[0];
+  if (!track) return;
+  try {
+    await track.applyConstraints({ advanced: [{ torch: enabled }] });
+    _torchOn = enabled;
+  } catch (err) {
+    console.warn('Flash non disponibile:', err.message);
+  }
+}
+
+function isTorchOn() {
+  return _torchOn;
 }
 
 function capturePhoto() {

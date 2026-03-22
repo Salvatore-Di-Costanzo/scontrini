@@ -83,6 +83,16 @@ async function startCaptureView() {
     document.getElementById('btn-capture').style.display = 'none';
   }
 
+  // Mostra il tasto flash solo se supportato dal dispositivo
+  const torchBtn = document.getElementById('btn-torch');
+  if (cameraAvailable && isTorchSupported()) {
+    torchBtn.style.display = 'flex';
+    torchBtn.onclick = async () => {
+      await setTorch(!isTorchOn());
+      torchBtn.classList.toggle('torch-on', isTorchOn());
+    };
+  }
+
   if (cameraAvailable) {
     document.getElementById('btn-capture').onclick = () => {
       const base64 = capturePhoto();

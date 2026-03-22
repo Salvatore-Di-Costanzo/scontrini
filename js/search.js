@@ -27,7 +27,9 @@ function renderSearchResults(entries) {
   container.innerHTML = '';
 
   if (entries.length === 0) {
-    container.innerHTML = '<p>Nessun risultato.</p>';
+    const p = document.createElement('p');
+    p.textContent = 'Nessun risultato.';
+    container.appendChild(p);
     return;
   }
 
@@ -38,29 +40,40 @@ function renderSearchResults(entries) {
     const div = document.createElement('div');
     div.className = 'result-item';
 
-    const header = document.createElement('strong');
-    header.textContent = e.categoria;
+    // Header: badge categoria + data
+    const header = document.createElement('div');
+    header.className = 'result-header';
+    const badge = document.createElement('span');
+    badge.className = 'result-badge';
+    badge.textContent = e.categoria;
+    const date = document.createElement('span');
+    date.className = 'result-date';
+    date.textContent = e.data;
+    header.appendChild(badge);
+    header.appendChild(date);
     div.appendChild(header);
-    div.appendChild(document.createTextNode(` — ${e.data}`));
-    div.appendChild(document.createElement('br'));
 
-    const desc = document.createElement('span');
+    // Descrizione principale
+    const desc = document.createElement('div');
+    desc.className = 'result-descrizione';
     desc.textContent = e.descrizione;
     div.appendChild(desc);
-    div.appendChild(document.createElement('br'));
 
-    const meta = document.createElement('small');
+    // Meta: tag + importo
+    const meta = document.createElement('div');
+    meta.className = 'result-meta';
     const tagText = e.tag.join(', ') + (e.importo ? ` · €${e.importo}` : '');
     meta.textContent = tagText;
     div.appendChild(meta);
-    div.appendChild(document.createElement('br'));
 
+    // Link Drive
     const link = document.createElement('a');
     // Valida l'URL per prevenire XSS javascript:
     link.href = e.drive_url && e.drive_url.startsWith('https://') ? e.drive_url : '#';
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
-    link.textContent = 'Apri PDF';
+    link.className = 'result-link';
+    link.textContent = 'Apri PDF →';
     div.appendChild(link);
 
     container.appendChild(div);

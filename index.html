@@ -4,17 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Scontrini</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
+  <header class="app-header">
+    <div class="logo">S</div>
+    <span class="app-title">Scontrini</span>
+  </header>
+
   <!-- VIEW: setup (Gemini key + Google login) -->
   <section id="view-setup" class="view">
-    <h1>Scontrini</h1>
+    <h1>Benvenuto</h1>
+    <p class="setup-subtitle">Archivia i tuoi documenti con intelligenza</p>
     <div id="setup-gemini">
-      <p>Inserisci la tua Gemini API key per continuare:</p>
-      <input type="password" id="input-gemini-key" placeholder="Gemini API key">
-      <button id="btn-save-gemini-key">Salva</button>
+      <label for="input-gemini-key">Gemini API Key</label>
+      <input type="password" id="input-gemini-key" placeholder="Inserisci la tua chiave API">
+      <button id="btn-save-gemini-key">Continua</button>
     </div>
     <div id="setup-google" style="display:none">
       <button id="btn-google-login">Accedi con Google</button>
@@ -23,65 +32,78 @@
 
   <!-- VIEW: capture -->
   <section id="view-capture" class="view" style="display:none">
-    <h2>Sessione foto</h2>
+    <h2>Nuova sessione</h2>
     <div id="camera-preview-container">
       <video id="camera-video" autoplay playsinline></video>
       <canvas id="camera-canvas" style="display:none"></canvas>
     </div>
     <button id="btn-capture">Scatta foto</button>
-    <input type="file" id="input-file-upload" accept="image/*" style="display:none">
-    <button id="btn-file-fallback">Carica da file</button>
+    <input type="file" id="input-file-upload" accept="image/*" multiple style="display:none">
+    <button id="btn-file-fallback" class="btn-secondary">Carica da file</button>
     <div id="photo-thumbnails"></div>
-    <button id="btn-analyze" disabled>Analizza e continua</button>
+    <button id="btn-analyze" disabled>Analizza e continua →</button>
   </section>
 
   <!-- VIEW: review metadata -->
   <section id="view-review" class="view" style="display:none">
-    <h2>Conferma informazioni</h2>
-    <label>Categoria
-      <input type="text" id="field-categoria">
-      <div id="categoria-suggestions"></div>
-    </label>
-    <label>Descrizione
-      <input type="text" id="field-descrizione">
-    </label>
-    <label>Tag (separati da virgola)
-      <input type="text" id="field-tag">
-    </label>
-    <label>Importo (€)
-      <input type="text" id="field-importo">
-    </label>
-    <label>Data
-      <input type="date" id="field-data">
-    </label>
+    <h2>Conferma dati</h2>
+    <label for="field-categoria">Categoria</label>
+    <input type="text" id="field-categoria">
+    <div id="categoria-suggestions"></div>
+    <label for="field-descrizione">Descrizione</label>
+    <input type="text" id="field-descrizione">
+    <label for="field-tag">Tag (separati da virgola)</label>
+    <input type="text" id="field-tag" placeholder="es. garanzia, caldaia">
+    <label for="field-importo">Importo (€)</label>
+    <input type="text" id="field-importo" placeholder="es. 1200.00">
+    <label for="field-data">Data</label>
+    <input type="date" id="field-data">
     <button id="btn-save-session">Salva sessione</button>
   </section>
 
   <!-- VIEW: saving progress -->
   <section id="view-saving" class="view" style="display:none">
-    <h2>Salvataggio in corso...</h2>
+    <div class="saving-spinner"></div>
     <p id="saving-status"></p>
   </section>
 
   <!-- VIEW: search -->
   <section id="view-search" class="view" style="display:none">
     <h2>Archivio</h2>
-    <input type="text" id="search-text" placeholder="Cerca...">
-    <select id="search-categoria"><option value="">Tutte le categorie</option></select>
-    <input type="date" id="search-date-from">
-    <input type="date" id="search-date-to">
-    <input type="number" id="search-importo-min" placeholder="Importo min (€)" min="0" step="0.01">
-    <input type="number" id="search-importo-max" placeholder="Importo max (€)" min="0" step="0.01">
+    <div class="search-filters">
+      <input type="text" id="search-text" placeholder="Cerca per descrizione, tag…">
+      <select id="search-categoria"><option value="">Tutte le categorie</option></select>
+      <div class="filter-row">
+        <div>
+          <label for="search-date-from">Dal</label>
+          <input type="date" id="search-date-from">
+        </div>
+        <div>
+          <label for="search-date-to">Al</label>
+          <input type="date" id="search-date-to">
+        </div>
+      </div>
+      <div class="filter-row">
+        <div>
+          <label for="search-importo-min">Importo min</label>
+          <input type="number" id="search-importo-min" placeholder="€" min="0" step="0.01">
+        </div>
+        <div>
+          <label for="search-importo-max">Importo max</label>
+          <input type="number" id="search-importo-max" placeholder="€" min="0" step="0.01">
+        </div>
+      </div>
+    </div>
     <div id="search-results"></div>
-    <button id="btn-new-session">Nuova sessione</button>
+    <button id="btn-new-session" class="btn-secondary">+ Nuova sessione</button>
   </section>
 
-  <!-- Libraries -->
+  <!-- Librerie -->
   <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- App modules (order matters) -->
+  <!-- Moduli app (l'ordine è rilevante) -->
   <script src="js/auth.js"></script>
   <script src="js/camera.js"></script>
   <script src="js/session.js"></script>

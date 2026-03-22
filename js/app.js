@@ -1,6 +1,6 @@
 // app.js — Controller principale
 
-const GOOGLE_CLIENT_ID = 'YOUR_CLIENT_ID_HERE'; // Sostituire con il proprio Client ID OAuth2
+const GOOGLE_CLIENT_ID = '1072745642634-bvjmub2voji06vb7ptrn1gip0bctbtvd.apps.googleusercontent.com'; // Sostituire con il proprio Client ID OAuth2
 
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
@@ -121,8 +121,7 @@ async function startReviewView() {
 
   if (isNew && existingCategories.length > 0) {
     const hint = document.createElement('p');
-    hint.style.fontSize = '0.85rem';
-    hint.style.color = '#555';
+    hint.className = 'hint-text';
     hint.textContent = 'Categoria nuova suggerita. Scegli una esistente o conferma:';
     suggestionsEl.appendChild(hint);
   }
